@@ -66,11 +66,3 @@ Acts are atomic conversational events that capture the semantic meaning of busin
 npm install -g @pryszm/act-validator
 act-validate my-conversation.json
 ```
-
-## Contributing
-
-See [CONTRIBUTING.md](https://github.com/pryszm/.github/blob/main/CONTRIBUTING.md) for development guidelines and submission process.
-
-## License
-
-Apache License 2.0
