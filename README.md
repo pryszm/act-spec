@@ -69,7 +69,7 @@ act-validate my-conversation.json
 
 ## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines and submission process.
+See [CONTRIBUTING.md](https://github.com/pryszm/.github/blob/main/CONTRIBUTING.md) for development guidelines and submission process.
 
 ## License
 
