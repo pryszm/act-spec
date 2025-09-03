@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.astra.dev/v1/fact.json",
+  "title": "Fact",
+  "description": "Act that declares facts or information provided during conversation",
+  "allOf": [
+    {
+      "$ref": "act.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "fact"
+        },
+        "entity": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Entity identifier as string"
+            },
+            {
+              "$ref": "entity.json",
+              "description": "Structured entity reference"
+            }
+          ],
+          "description": "Business entity being modified (order, customer, appointment, etc.)"
+        },
+        "field": {
+          "type": "string",
+          "description": "Specific field or property being set"
+        },
+        "value": {
+          "description": "Value being assigned to the field (any JSON type)"
+        },
+        "operation": {
+          "type": "string",
+          "enum": ["set", "append", "increment", "decrement", "delete", "merge"],
+          "default": "set",
+          "description": "Operation being performed on the field"
+        },
+        "previous_value": {
+          "description": "Previous value of the field (for audit trail)"
+        },
+        "validation_status": {
+          "type": "string",
+          "enum": ["pending", "valid", "invalid", "partial"],
+          "default": "pending",
+          "description": "Validation status of this fact"
+        },
+        "validation_errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of validation errors if validation_status is invalid"
+        }
+      },
+      "required": ["entity", "field", "value"],
+      "additionalProperties": false
+    }
+  ]
+}
