@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.astra.dev/v1/ask.json",
+  "title": "Ask",
+  "description": "Act that requests missing information required to complete a business process",
+  "allOf": [
+    {
+      "$ref": "act.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ask"
+        },
+        "field": {
+          "type": "string",
+          "description": "Field or information being requested"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "Question or request presented to obtain the information"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "constraint.json"
+          },
+          "description": "Validation constraints for the requested information"
+        },
+        "required": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether this information is required to proceed"
+        },
+        "expected_type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "object", "array", "date", "email", "phone", "address"],
+          "description": "Expected data type of the response"
+        },
+        "retry_count": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Number of times this question has been asked"
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 3,
+          "description": "Maximum number of retry attempts before escalation"
+        }
+      },
+      "required": ["field", "prompt"],
+      "additionalProperties": false
+    }
+  ]
+}
