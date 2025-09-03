@@ -75,12 +75,12 @@ interface Error extends Act {
 
 ```
 astra/
-├── idl/                    # Interface Definition Languages
-│   ├── json-schema/        # JSON Schema definitions
-│   ├── protobuf/          # Protocol Buffer schemas  
-│   └── avro/              # Apache Avro schemas
-├── model/                 # Language implementations
-│   ├── typescript/        # astra-model-ts package
+├── idl/                  # Interface Definition Languages
+│   ├── json-schema/      # JSON Schema definitions
+│   ├── protobuf/         # Protocol Buffer schemas  
+│   └── avro/             # Apache Avro schemas
+├── model/                # Language implementations
+│   ├── typescript/       # astra-model-ts package
 │   ├── python/           # astra-model-py package
 │   └── go/               # astra-model-go package
 ├── docs/                 # Architecture documentation
