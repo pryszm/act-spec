@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package astra.v1;
+
+import "participant.proto";
+import "ask.proto";
+import "fact.proto";
+import "confirm.proto";
+import "commit.proto";
+import "error.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/pryszm/astra-model-go/v1";
+option java_package = "com.pryszm.astra.v1";
+option java_outer_classname = "ConversationProto";
+option csharp_namespace = "Pryszm.Astra.V1";
+
+// Current status of the conversation
+enum ConversationStatus {
+  CONVERSATION_STATUS_UNSPECIFIED = 0;
+  CONVERSATION_STATUS_ACTIVE = 1;
+  CONVERSATION_STATUS_PAUSED = 2;
+  CONVERSATION_STATUS_COMPLETED = 3;
+  CONVERSATION_STATUS_FAILED = 4;
+  CONVERSATION_STATUS_CANCELLED = 5;
+}
+
+// Union type for all possible acts
+message ConversationAct {
+  oneof act {
+    Ask ask = 1;
+    Fact fact = 2;
+    Confirm confirm = 3;
+    Commit commit = 4;
+    Error error = 5;
+  }
+}
+
+// Conversation context and session information
+message ConversationContext {
+  // Session identifier
+  optional string session_id = 1;
+  
+  // User agent or client information
+  optional string user_agent = 2;
+  
+  // Client IP address
+  optional string ip_address = 3;
+  
+  // How the conversation was initiated
+  optional string referrer = 4;
+  
+  // Additional context properties
+  google.protobuf.Struct additional_properties = 5;
+}
+
+// Additional conversation metadata
+message ConversationMetadata {
+  // Total conversation duration in milliseconds
+  optional int64 total_duration_ms = 1;
+  
+  // Total number of acts in the conversation
+  optional int32 act_count = 2;
+  
+  // Number of errors that occurred
+  optional int32 error_count = 3;
+  
+  // Number of successful commits
+  optional int32 commit_count = 4;
+  
+  // Average confidence score across all acts
+  optional double avg_confidence = 5;
+  
+  // Additional metadata properties
+  google.protobuf.Struct additional_properties = 6;
+}
+
+// Complete ASTRA conversation container with acts and metadata
+message Conversation {
+  // Unique identifier for this conversation
+  string id = 1;
+  
+  // List of conversation participants
+  repeated Participant participants = 2;
+  
+  // Ordered sequence of acts in this conversation
+  repeated ConversationAct acts = 3;
+  
+  // When the conversation started
+  optional google.protobuf.Timestamp started_at = 4;
+  
+  // When the conversation ended
+  optional google.protobuf.Timestamp ended_at = 5;
+  
+  // Current status of the conversation
+  ConversationStatus status = 6; // defaults to ACTIVE
+  
+  // Primary communication channel for this conversation
+  optional string channel = 7;
+  
+  // Business schema identifier used for this conversation
+  optional string schema = 8;
+  
+  // Conversation context and session information
+  optional ConversationContext context = 9;
+  
+  // Final computed state of all entities after processing all acts
+  optional google.protobuf.Struct final_state = 10;
+  
+  // Additional conversation metadata
+  optional ConversationMetadata metadata = 11;
+}
