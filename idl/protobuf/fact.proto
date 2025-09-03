@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package astra.v1;
+
+import "act.proto";
+import "entity.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/pryszm/astra-model-go/v1";
+option java_package = "com.pryszm.astra.v1";
+option java_outer_classname = "FactProto";
+option csharp_namespace = "Pryszm.Astra.V1";
+
+// Operation being performed on the field
+enum FieldOperation {
+  FIELD_OPERATION_UNSPECIFIED = 0;
+  FIELD_OPERATION_SET = 1;
+  FIELD_OPERATION_APPEND = 2;
+  FIELD_OPERATION_INCREMENT = 3;
+  FIELD_OPERATION_DECREMENT = 4;
+  FIELD_OPERATION_DELETE = 5;
+  FIELD_OPERATION_MERGE = 6;
+}
+
+// Validation status of this fact
+enum ValidationStatus {
+  VALIDATION_STATUS_UNSPECIFIED = 0;
+  VALIDATION_STATUS_PENDING = 1;
+  VALIDATION_STATUS_VALID = 2;
+  VALIDATION_STATUS_INVALID = 3;
+  VALIDATION_STATUS_PARTIAL = 4;
+}
+
+// Act that declares facts or information provided during conversation
+message Fact {
+  // Base act properties
+  Act act = 1;
+  
+  // Business entity being modified (order, customer, appointment, etc.)
+  EntityRef entity = 2;
+  
+  // Specific field or property being set
+  string field = 3;
+  
+  // Value being assigned to the field (encoded as Any to support any type)
+  google.protobuf.Any value = 4;
+  
+  // Operation being performed on the field
+  FieldOperation operation = 5; // defaults to SET
+  
+  // Previous value of the field (for audit trail)
+  optional google.protobuf.Any previous_value = 6;
+  
+  // Validation status of this fact
+  ValidationStatus validation_status = 7; // defaults to PENDING
+  
+  // List of validation errors if validation_status is invalid
+  repeated string validation_errors = 8;
+}
