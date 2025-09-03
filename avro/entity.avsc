@@ -1,0 +1,48 @@
+{
+  "type": "record",
+  "name": "Entity",
+  "namespace": "dev.astra.v1",
+  "doc": "Reference to a business entity in ASTRA conversations",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string",
+      "doc": "Unique identifier for this entity within the conversation scope"
+    },
+    {
+      "name": "type",
+      "type": "string",
+      "doc": "Type of business entity (order, customer, appointment, ticket, etc.)"
+    },
+    {
+      "name": "external_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "External system identifier for this entity"
+    },
+    {
+      "name": "system",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "External system that owns this entity"
+    },
+    {
+      "name": "version",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Version or revision of this entity"
+    },
+    {
+      "name": "schema_url",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "URL to the schema definition for this entity type"
+    },
+    {
+      "name": "metadata",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Additional entity-specific metadata as JSON string"
+    }
+  ]
+}
