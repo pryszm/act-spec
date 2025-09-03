@@ -99,4 +99,24 @@
           "description": "Total number of acts in the conversation"
         },
         "error_count": {
-          "type":
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of errors that occurred"
+        },
+        "commit_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of successful commits"
+        },
+        "avg_confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Average confidence score across all acts"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
