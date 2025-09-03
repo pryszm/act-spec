@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.astra.dev/v1/confirm.json",
+  "title": "Confirm",
+  "description": "Act that verifies understanding of information before commitment",
+  "allOf": [
+    {
+      "$ref": "act.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "confirm"
+        },
+        "entity": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Entity identifier as string"
+            },
+            {
+              "$ref": "entity.json",
+              "description": "Structured entity reference"
+            }
+          ],
+          "description": "Business entity being confirmed"
+        },
+        "summary": {
+          "type": "string",
+          "description": "Human-readable summary of what is being confirmed"
+        },
+        "awaiting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether confirmation is still pending"
+        },
+        "confirmed": {
+          "type": "boolean",
+          "description": "Whether the confirmation was accepted (true) or rejected (false)"
+        },
+        "confirmation_method": {
+          "type": "string",
+          "enum": ["verbal", "explicit", "implicit", "timeout", "system"],
+          "description": "How the confirmation was obtained"
+        },
+        "fields_confirmed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Specific fields or aspects being confirmed"
+        },
+        "rejection_reason": {
+          "type": "string",
+          "description": "Reason provided if confirmation was rejected"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Timeout for awaiting confirmation in milliseconds"
+        }
+      },
+      "required": ["entity", "summary"],
+      "additionalProperties": false
+    }
+  ]
+}
