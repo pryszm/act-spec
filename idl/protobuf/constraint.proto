@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package astra.v1;
+
+option go_package = "github.com/pryszm/astra-model-go/v1";
+option java_package = "com.pryszm.astra.v1";
+option java_outer_classname = "ConstraintProto";
+option csharp_namespace = "Pryszm.Astra.V1";
+
+// Type of constraint being applied
+enum ConstraintType {
+  CONSTRAINT_TYPE_UNSPECIFIED = 0;
+  CONSTRAINT_TYPE_REQUIRED = 1;
+  CONSTRAINT_TYPE_OPTIONAL = 2;
+  CONSTRAINT_TYPE_MIN_LENGTH = 3;
+  CONSTRAINT_TYPE_MAX_LENGTH = 4;
+  CONSTRAINT_TYPE_PATTERN = 5;
+  CONSTRAINT_TYPE_FORMAT = 6;
+  CONSTRAINT_TYPE_RANGE = 7;
+  CONSTRAINT_TYPE_ENUM = 8;
+  CONSTRAINT_TYPE_CUSTOM = 9;
+}
+
+// Format validation types
+enum FormatType {
+  FORMAT_TYPE_UNSPECIFIED = 0;
+  FORMAT_TYPE_EMAIL = 1;
+  FORMAT_TYPE_PHONE = 2;
+  FORMAT_TYPE_URL = 3;
+  FORMAT_TYPE_DATE = 4;
+  FORMAT_TYPE_TIME = 5;
+  FORMAT_TYPE_DATETIME = 6;
+  FORMAT_TYPE_UUID = 7;
+  FORMAT_TYPE_IPV4 = 8;
+  FORMAT_TYPE_IPV6 = 9;
+}
+
+// Range constraint value
+message RangeConstraint {
+  optional double min = 1;
+  optional double max = 2;
+  bool inclusive = 3; // defaults to true
+}
+
+// Enum constraint values
+message EnumConstraint {
+  repeated string values = 1;
+}
+
+// Constraint value (oneof based on constraint type)
+message ConstraintValue {
+  oneof value {
+    int32 int_value = 1;        // for min_length, max_length
+    string string_value = 2;    // for pattern
+    FormatType format_value = 3; // for format
+    RangeConstraint range_value = 4; // for range
+    EnumConstraint enum_value = 5;   // for enum
+  }
+}
+
+// Validation constraint for ASTRA fields and values
+message Constraint {
+  // Type of constraint being applied
+  ConstraintType type = 1;
+  
+  // Constraint value (varies by constraint type)
+  optional ConstraintValue value = 2;
+  
+  // Human-readable error message when constraint is violated
+  optional string message = 3;
+  
+  // Machine-readable error code for constraint violations
+  optional string code = 4;
+}
