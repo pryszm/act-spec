@@ -1,0 +1,203 @@
+{
+  "type": "record",
+  "name": "Conversation",
+  "namespace": "dev.astra.v1",
+  "doc": "Complete ASTRA conversation container with acts and metadata",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string",
+      "doc": "Unique identifier for this conversation"
+    },
+    {
+      "name": "participants",
+      "type": {
+        "type": "array",
+        "items": "dev.astra.v1.Participant"
+      },
+      "doc": "List of conversation participants"
+    },
+    {
+      "name": "acts",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "ConversationAct",
+          "fields": [
+            {
+              "name": "act_type",
+              "type": {
+                "type": "enum",
+                "name": "ConversationActType",
+                "symbols": ["ask", "fact", "confirm", "commit", "error"]
+              }
+            },
+            {
+              "name": "ask",
+              "type": ["null", "dev.astra.v1.Ask"],
+              "default": null
+            },
+            {
+              "name": "fact",
+              "type": ["null", "dev.astra.v1.Fact"],
+              "default": null
+            },
+            {
+              "name": "confirm",
+              "type": ["null", "dev.astra.v1.Confirm"],
+              "default": null
+            },
+            {
+              "name": "commit",
+              "type": ["null", "dev.astra.v1.Commit"],
+              "default": null
+            },
+            {
+              "name": "error",
+              "type": ["null", "dev.astra.v1.Error"],
+              "default": null
+            }
+          ]
+        }
+      },
+      "doc": "Ordered sequence of acts in this conversation"
+    },
+    {
+      "name": "started_at",
+      "type": ["null", "long"],
+      "logicalType": "timestamp-millis",
+      "default": null,
+      "doc": "When the conversation started (milliseconds since epoch)"
+    },
+    {
+      "name": "ended_at",
+      "type": ["null", "long"],
+      "logicalType": "timestamp-millis",
+      "default": null,
+      "doc": "When the conversation ended (milliseconds since epoch)"
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "ConversationStatus",
+        "symbols": ["active", "paused", "completed", "failed", "cancelled"]
+      },
+      "default": "active",
+      "doc": "Current status of the conversation"
+    },
+    {
+      "name": "channel",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Primary communication channel for this conversation"
+    },
+    {
+      "name": "schema",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Business schema identifier used for this conversation"
+    },
+    {
+      "name": "context",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "ConversationContext",
+          "fields": [
+            {
+              "name": "session_id",
+              "type": ["null", "string"],
+              "default": null,
+              "doc": "Session identifier"
+            },
+            {
+              "name": "user_agent",
+              "type": ["null", "string"],
+              "default": null,
+              "doc": "User agent or client information"
+            },
+            {
+              "name": "ip_address",
+              "type": ["null", "string"],
+              "default": null,
+              "doc": "Client IP address"
+            },
+            {
+              "name": "referrer",
+              "type": ["null", "string"],
+              "default": null,
+              "doc": "How the conversation was initiated"
+            },
+            {
+              "name": "additional_properties",
+              "type": ["null", "string"],
+              "default": null,
+              "doc": "Additional context properties as JSON string"
+            }
+          ]
+        }
+      ],
+      "default": null,
+      "doc": "Conversation context and session information"
+    },
+    {
+      "name": "final_state",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Final computed state of all entities after processing all acts as JSON string"
+    },
+    {
+      "name": "metadata",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "ConversationMetadata",
+          "fields": [
+            {
+              "name": "total_duration_ms",
+              "type": ["null", "long"],
+              "default": null,
+              "doc": "Total conversation duration in milliseconds"
+            },
+            {
+              "name": "act_count",
+              "type": ["null", "int"],
+              "default": null,
+              "doc": "Total number of acts in the conversation"
+            },
+            {
+              "name": "error_count",
+              "type": ["null", "int"],
+              "default": null,
+              "doc": "Number of errors that occurred"
+            },
+            {
+              "name": "commit_count",
+              "type": ["null", "int"],
+              "default": null,
+              "doc": "Number of successful commits"
+            },
+            {
+              "name": "avg_confidence",
+              "type": ["null", "double"],
+              "default": null,
+              "doc": "Average confidence score across all acts"
+            },
+            {
+              "name": "additional_properties",
+              "type": ["null", "string"],
+              "default": null,
+              "doc": "Additional metadata properties as JSON string"
+            }
+          ]
+        }
+      ],
+      "default": null,
+      "doc": "Additional conversation metadata"
+    }
+  ]
+}
