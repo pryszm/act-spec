@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package astra.v1;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/pryszm/astra-model-go/v1";
+option java_package = "com.pryszm.astra.v1";
+option java_outer_classname = "EntityProto";
+option csharp_namespace = "Pryszm.Astra.V1";
+
+// Reference to a business entity in ASTRA conversations
+message Entity {
+  // Unique identifier for this entity within the conversation scope
+  string id = 1;
+  
+  // Type of business entity (order, customer, appointment, ticket, etc.)
+  string type = 2;
+  
+  // External system identifier for this entity
+  optional string external_id = 3;
+  
+  // External system that owns this entity
+  optional string system = 4;
+  
+  // Version or revision of this entity
+  optional string version = 5;
+  
+  // URL to the schema definition for this entity type
+  optional string schema_url = 6;
+  
+  // Additional entity-specific metadata
+  optional google.protobuf.Struct metadata = 7;
+}
+
+// Entity reference that can be either a string ID or structured Entity
+message EntityRef {
+  oneof ref {
+    string id = 1;           // Simple string entity ID
+    Entity entity = 2;       // Full structured entity reference
+  }
+}
