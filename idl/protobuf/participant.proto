@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package astra.v1;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/pryszm/astra-model-go/v1";
+option java_package = "com.pryszm.astra.v1";
+option java_outer_classname = "ParticipantProto";
+option csharp_namespace = "Pryszm.Astra.V1";
+
+// Type of participant
+enum ParticipantType {
+  PARTICIPANT_TYPE_UNSPECIFIED = 0;
+  PARTICIPANT_TYPE_HUMAN = 1;
+  PARTICIPANT_TYPE_AI = 2;
+  PARTICIPANT_TYPE_SYSTEM = 3;
+  PARTICIPANT_TYPE_BOT = 4;
+}
+
+// Participant preferences
+message ParticipantPreferences {
+  // Preferred language code (ISO 639-1 with optional region)
+  optional string language = 1;
+  
+  // Preferred timezone (IANA timezone identifier)
+  optional string timezone = 2;
+  
+  // Preferred communication channels in order of preference
+  repeated string communication_channels = 3;
+  
+  // Additional preferences
+  google.protobuf.Struct additional_properties = 4;
+}
+
+// Conversation participant in ASTRA conversations
+message Participant {
+  // Unique identifier for this participant
+  string id = 1;
+  
+  // Type of participant
+  ParticipantType type = 2;
+  
+  // Business role of the participant (customer, agent, manager, etc.)
+  optional string role = 3;
+  
+  // Display name of the participant
+  optional string name = 4;
+  
+  // Email address of the participant
+  optional string email = 5;
+  
+  // Phone number of the participant
+  optional string phone = 6;
+  
+  // External system identifier for this participant
+  optional string external_id = 7;
+  
+  // External system that manages this participant
+  optional string system = 8;
+  
+  // List of capabilities this participant has
+  repeated string capabilities = 9;
+  
+  // List of permissions granted to this participant
+  repeated string permissions = 10;
+  
+  // Participant preferences
+  optional ParticipantPreferences preferences = 11;
+  
+  // Additional participant metadata
+  optional google.protobuf.Struct metadata = 12;
+}
