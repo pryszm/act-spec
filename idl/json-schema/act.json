@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.astra.dev/v1/act.json",
+  "title": "Act",
+  "description": "Base type for all conversational actions in ASTRA",
+  "type": "object",
+  "required": ["id", "timestamp", "speaker", "type"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^act_[a-zA-Z0-9_-]+$",
+      "description": "Unique identifier for this act within the conversation"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the act occurred"
+    },
+    "speaker": {
+      "type": "string",
+      "description": "Identifier of the conversation participant who performed this act"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["ask", "fact", "confirm", "commit", "error"],
+      "description": "Type of conversational act being performed"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence score for automated act extraction (0.0 to 1.0)"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["human", "speech_recognition", "text_analysis", "system", "ai"],
+      "description": "Source that generated this act"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional context-specific metadata",
+      "properties": {
+        "channel": {
+          "type": "string",
+          "description": "Communication channel (voice, text, email, etc.)"
+        },
+        "language": {
+          "type": "string",
+          "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+          "description": "Language code (ISO 639-1, optional region)"
+        },
+        "original_text": {
+          "type": "string",
+          "description": "Original utterance that generated this act"
+        },
+        "processing_time_ms": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Time taken to process this act in milliseconds"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
