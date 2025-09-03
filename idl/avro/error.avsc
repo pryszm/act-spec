@@ -1,0 +1,104 @@
+{
+  "type": "record",
+  "name": "Error",
+  "namespace": "dev.astra.v1",
+  "doc": "Act that handles failures and exceptions in conversational processing",
+  "fields": [
+    {
+      "name": "act",
+      "type": "dev.astra.v1.Act",
+      "doc": "Base act properties"
+    },
+    {
+      "name": "code",
+      "type": "string",
+      "doc": "Machine-readable error code"
+    },
+    {
+      "name": "message",
+      "type": "string",
+      "doc": "Human-readable error message"
+    },
+    {
+      "name": "recoverable",
+      "type": "boolean",
+      "doc": "Whether the conversation can continue after this error"
+    },
+    {
+      "name": "severity",
+      "type": {
+        "type": "enum",
+        "name": "ErrorSeverity",
+        "symbols": ["info", "warning", "error", "critical"]
+      },
+      "default": "error",
+      "doc": "Severity level of the error"
+    },
+    {
+      "name": "category",
+      "type": [
+        "null",
+        {
+          "type": "enum",
+          "name": "ErrorCategory",
+          "symbols": [
+            "validation",
+            "processing",
+            "integration",
+            "timeout",
+            "permission",
+            "system",
+            "user_input",
+            "business_rule"
+          ]
+        }
+      ],
+      "default": null,
+      "doc": "Category of error for classification"
+    },
+    {
+      "name": "details",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Additional error context and debugging information as JSON string"
+    },
+    {
+      "name": "related_act_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "ID of the act that caused this error"
+    },
+    {
+      "name": "suggested_action",
+      "type": [
+        "null",
+        {
+          "type": "enum",
+          "name": "SuggestedAction",
+          "symbols": [
+            "retry",
+            "escalate",
+            "ignore",
+            "clarify",
+            "fallback",
+            "terminate"
+          ]
+        }
+      ],
+      "default": null,
+      "doc": "Suggested recovery action"
+    },
+    {
+      "name": "user_message",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "User-friendly message to display to conversation participants"
+    },
+    {
+      "name": "stack_trace",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Technical stack trace for debugging (not shown to users)"
+    }
+  ]
+}

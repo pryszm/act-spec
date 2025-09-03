@@ -1,0 +1,96 @@
+{
+  "type": "record",
+  "name": "Act",
+  "namespace": "dev.astra.v1",
+  "doc": "Base type for all conversational actions in ASTRA",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string",
+      "doc": "Unique identifier for this act within the conversation"
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "logicalType": "timestamp-millis",
+      "doc": "Timestamp when the act occurred (milliseconds since epoch)"
+    },
+    {
+      "name": "speaker",
+      "type": "string",
+      "doc": "Identifier of the conversation participant who performed this act"
+    },
+    {
+      "name": "type",
+      "type": {
+        "type": "enum",
+        "name": "ActType",
+        "symbols": ["ask", "fact", "confirm", "commit", "error"]
+      },
+      "doc": "Type of conversational act being performed"
+    },
+    {
+      "name": "confidence",
+      "type": ["null", "double"],
+      "default": null,
+      "doc": "Confidence score for automated act extraction (0.0 to 1.0)"
+    },
+    {
+      "name": "source",
+      "type": [
+        "null",
+        {
+          "type": "enum",
+          "name": "Source",
+          "symbols": ["human", "speech_recognition", "text_analysis", "system", "ai"]
+        }
+      ],
+      "default": null,
+      "doc": "Source that generated this act"
+    },
+    {
+      "name": "metadata",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "ActMetadata",
+          "fields": [
+            {
+              "name": "channel",
+              "type": ["null", "string"],
+              "default": null,
+              "doc": "Communication channel (voice, text, email, etc.)"
+            },
+            {
+              "name": "language",
+              "type": ["null", "string"],
+              "default": null,
+              "doc": "Language code (ISO 639-1, optional region)"
+            },
+            {
+              "name": "original_text",
+              "type": ["null", "string"],
+              "default": null,
+              "doc": "Original utterance that generated this act"
+            },
+            {
+              "name": "processing_time_ms",
+              "type": ["null", "double"],
+              "default": null,
+              "doc": "Time taken to process this act in milliseconds"
+            },
+            {
+              "name": "additional_properties",
+              "type": ["null", "string"],
+              "default": null,
+              "doc": "Additional context-specific metadata as JSON string"
+            }
+          ]
+        }
+      ],
+      "default": null,
+      "doc": "Additional context-specific metadata"
+    }
+  ]
+}

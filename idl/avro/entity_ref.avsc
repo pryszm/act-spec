@@ -1,0 +1,29 @@
+{
+  "type": "record",
+  "name": "EntityRef",
+  "namespace": "dev.astra.v1",
+  "doc": "Entity reference that can be either a string ID or structured Entity",
+  "fields": [
+    {
+      "name": "ref_type",
+      "type": {
+        "type": "enum",
+        "name": "EntityRefType",
+        "symbols": ["id", "entity"]
+      },
+      "doc": "Type of entity reference"
+    },
+    {
+      "name": "id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Simple string entity ID"
+    },
+    {
+      "name": "entity",
+      "type": ["null", "dev.astra.v1.Entity"],
+      "default": null,
+      "doc": "Full structured entity reference"
+    }
+  ]
+}

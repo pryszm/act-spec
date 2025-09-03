@@ -1,0 +1,63 @@
+{
+  "type": "record",
+  "name": "Ask",
+  "namespace": "dev.astra.v1",
+  "doc": "Act that requests missing information required to complete a business process",
+  "fields": [
+    {
+      "name": "act",
+      "type": "dev.astra.v1.Act",
+      "doc": "Base act properties"
+    },
+    {
+      "name": "field",
+      "type": "string",
+      "doc": "Field or information being requested"
+    },
+    {
+      "name": "prompt",
+      "type": "string",
+      "doc": "Question or request presented to obtain the information"
+    },
+    {
+      "name": "constraints",
+      "type": {
+        "type": "array",
+        "items": "dev.astra.v1.Constraint"
+      },
+      "default": [],
+      "doc": "Validation constraints for the requested information"
+    },
+    {
+      "name": "required",
+      "type": "boolean",
+      "default": true,
+      "doc": "Whether this information is required to proceed"
+    },
+    {
+      "name": "expected_type",
+      "type": [
+        "null",
+        {
+          "type": "enum",
+          "name": "ExpectedType",
+          "symbols": ["string", "number", "boolean", "object", "array", "date", "email", "phone", "address"]
+        }
+      ],
+      "default": null,
+      "doc": "Expected data type of the response"
+    },
+    {
+      "name": "retry_count",
+      "type": "int",
+      "default": 0,
+      "doc": "Number of times this question has been asked"
+    },
+    {
+      "name": "max_retries",
+      "type": "int",
+      "default": 3,
+      "doc": "Maximum number of retry attempts before escalation"
+    }
+  ]
+}

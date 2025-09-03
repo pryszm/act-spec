@@ -1,0 +1,88 @@
+{
+  "type": "record",
+  "name": "Constraint",
+  "namespace": "dev.astra.v1",
+  "doc": "Validation constraint for ASTRA fields and values",
+  "fields": [
+    {
+      "name": "type",
+      "type": {
+        "type": "enum",
+        "name": "ConstraintType",
+        "symbols": [
+          "required",
+          "optional", 
+          "min_length",
+          "max_length",
+          "pattern",
+          "format",
+          "range",
+          "enum",
+          "custom"
+        ]
+      },
+      "doc": "Type of constraint being applied"
+    },
+    {
+      "name": "value",
+      "type": [
+        "null",
+        "int",
+        "string",
+        {
+          "type": "enum",
+          "name": "FormatType",
+          "symbols": ["email", "phone", "url", "date", "time", "datetime", "uuid", "ipv4", "ipv6"]
+        },
+        {
+          "type": "record",
+          "name": "RangeConstraint",
+          "fields": [
+            {
+              "name": "min",
+              "type": ["null", "double"],
+              "default": null
+            },
+            {
+              "name": "max",
+              "type": ["null", "double"],
+              "default": null
+            },
+            {
+              "name": "inclusive",
+              "type": "boolean",
+              "default": true
+            }
+          ]
+        },
+        {
+          "type": "record",
+          "name": "EnumConstraint",
+          "fields": [
+            {
+              "name": "values",
+              "type": {
+                "type": "array",
+                "items": "string"
+              }
+            }
+          ]
+        }
+      ],
+      "default": null,
+      "doc": "Constraint value (varies by constraint type)"
+    },
+    {
+      "name": "message",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Human-readable error message when constraint is violated"
+    },
+    {
+      "name": "code",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Machine-readable error code for constraint violations"
+    }
+  ]
+}
