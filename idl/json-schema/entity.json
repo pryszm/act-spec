@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.astra.dev/v1/entity.json",
+  "title": "Entity",
+  "description": "Reference to a business entity in ASTRA conversations",
+  "type": "object",
+  "required": ["id", "type"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for this entity within the conversation scope"
+    },
+    "type": {
+      "type": "string",
+      "description": "Type of business entity (order, customer, appointment, ticket, etc.)"
+    },
+    "external_id": {
+      "type": "string",
+      "description": "External system identifier for this entity"
+    },
+    "system": {
+      "type": "string",
+      "description": "External system that owns this entity"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version or revision of this entity"
+    },
+    "schema_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the schema definition for this entity type"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional entity-specific metadata",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
