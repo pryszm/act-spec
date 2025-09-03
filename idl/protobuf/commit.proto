@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package astra.v1;
+
+import "act.proto";
+import "entity.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/pryszm/astra-model-go/v1";
+option java_package = "com.pryszm.astra.v1";
+option java_outer_classname = "CommitProto";
+option csharp_namespace = "Pryszm.Astra.V1";
+
+// Action being performed in the target system
+enum CommitAction {
+  COMMIT_ACTION_UNSPECIFIED = 0;
+  COMMIT_ACTION_CREATE = 1;
+  COMMIT_ACTION_UPDATE = 2;
+  COMMIT_ACTION_DELETE = 3;
+  COMMIT_ACTION_EXECUTE = 4;
+  COMMIT_ACTION_CANCEL = 5;
+  COMMIT_ACTION_PAUSE = 6;
+  COMMIT_ACTION_RESUME = 7;
+}
+
+// Status of the commit operation
+enum CommitStatus {
+  COMMIT_STATUS_UNSPECIFIED = 0;
+  COMMIT_STATUS_PENDING = 1;
+  COMMIT_STATUS_IN_PROGRESS = 2;
+  COMMIT_STATUS_SUCCESS = 3;
+  COMMIT_STATUS_FAILED = 4;
+  COMMIT_STATUS_RETRYING = 5;
+  COMMIT_STATUS_CANCELLED = 6;
+}
+
+// Error information for failed commits
+message CommitError {
+  // Error code from the target system
+  string code = 1;
+  
+  // Human-readable error message
+  string message = 2;
+  
+  // Additional error context
+  optional google.protobuf.Struct details = 3;
+  
+  // Whether the error can be recovered from
+  bool recoverable = 4;
+}
+
+// Act that executes business processes and triggers system integrations
+message Commit {
+  // Base act properties
+  Act act = 1;
+  
+  // Business entity being committed to external systems
+  EntityRef entity = 2;
+  
+  // Action being performed in the target system
+  CommitAction action = 3;
+  
+  // Target system identifier (CRM, order_management, etc.)
+  optional string system = 4;
+  
+  // External system transaction or record identifier
+  optional string transaction_id = 5;
+  
+  // Status of the commit operation
+  CommitStatus status = 6; // defaults to PENDING
+  
+  // Error information if commit failed
+  optional CommitError error = 7;
+  
+  // Number of retry attempts made
+  int32 retry_count = 8; // defaults to 0
+  
+  // Maximum number of retry attempts
+  int32 max_retries = 9; // defaults to 3
+  
+  // Key to ensure idempotent operations
+  optional string idempotency_key = 10;
+  
+  // Information needed to rollback this commit if necessary
+  optional google.protobuf.Struct rollback_info = 11;
+}
