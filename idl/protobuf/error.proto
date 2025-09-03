@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package astra.v1;
+
+import "act.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/pryszm/astra-model-go/v1";
+option java_package = "com.pryszm.astra.v1";
+option java_outer_classname = "ErrorProto";
+option csharp_namespace = "Pryszm.Astra.V1";
+
+// Severity level of the error
+enum ErrorSeverity {
+  ERROR_SEVERITY_UNSPECIFIED = 0;
+  ERROR_SEVERITY_INFO = 1;
+  ERROR_SEVERITY_WARNING = 2;
+  ERROR_SEVERITY_ERROR = 3;
+  ERROR_SEVERITY_CRITICAL = 4;
+}
+
+// Category of error for classification
+enum ErrorCategory {
+  ERROR_CATEGORY_UNSPECIFIED = 0;
+  ERROR_CATEGORY_VALIDATION = 1;
+  ERROR_CATEGORY_PROCESSING = 2;
+  ERROR_CATEGORY_INTEGRATION = 3;
+  ERROR_CATEGORY_TIMEOUT = 4;
+  ERROR_CATEGORY_PERMISSION = 5;
+  ERROR_CATEGORY_SYSTEM = 6;
+  ERROR_CATEGORY_USER_INPUT = 7;
+  ERROR_CATEGORY_BUSINESS_RULE = 8;
+}
+
+// Suggested recovery action
+enum SuggestedAction {
+  SUGGESTED_ACTION_UNSPECIFIED = 0;
+  SUGGESTED_ACTION_RETRY = 1;
+  SUGGESTED_ACTION_ESCALATE = 2;
+  SUGGESTED_ACTION_IGNORE = 3;
+  SUGGESTED_ACTION_CLARIFY = 4;
+  SUGGESTED_ACTION_FALLBACK = 5;
+  SUGGESTED_ACTION_TERMINATE = 6;
+}
+
+// Act that handles failures and exceptions in conversational processing
+message Error {
+  // Base act properties
+  Act act = 1;
+  
+  // Machine-readable error code
+  string code = 2;
+  
+  // Human-readable error message
+  string message = 3;
+  
+  // Whether the conversation can continue after this error
+  bool recoverable = 4;
+  
+  // Severity level of the error
+  ErrorSeverity severity = 5; // defaults to ERROR
+  
+  // Category of error for classification
+  optional ErrorCategory category = 6;
+  
+  // Additional error context and debugging information
+  optional google.protobuf.Struct details = 7;
+  
+  // ID of the act that caused this error
+  optional string related_act_id = 8;
+  
+  // Suggested recovery action
+  optional SuggestedAction suggested_action = 9;
+  
+  // User-friendly message to display to conversation participants
+  optional string user_message = 10;
+  
+  // Technical stack trace for debugging (not shown to users)
+  optional string stack_trace = 11;
+}
