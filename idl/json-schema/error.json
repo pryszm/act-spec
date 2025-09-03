@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.astra.dev/v1/error.json",
+  "title": "Error",
+  "description": "Act that handles failures and exceptions in conversational processing",
+  "allOf": [
+    {
+      "$ref": "act.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "error"
+        },
+        "code": {
+          "type": "string",
+          "description": "Machine-readable error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message"
+        },
+        "recoverable": {
+          "type": "boolean",
+          "description": "Whether the conversation can continue after this error"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "warning", "error", "critical"],
+          "default": "error",
+          "description": "Severity level of the error"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "validation",
+            "processing",
+            "integration", 
+            "timeout",
+            "permission",
+            "system",
+            "user_input",
+            "business_rule"
+          ],
+          "description": "Category of error for classification"
+        },
+        "details": {
+          "type": "object",
+          "description": "Additional error context and debugging information"
+        },
+        "related_act_id": {
+          "type": "string",
+          "pattern": "^act_[a-zA-Z0-9_-]+$",
+          "description": "ID of the act that caused this error"
+        },
+        "suggested_action": {
+          "type": "string",
+          "enum": [
+            "retry",
+            "escalate",
+            "ignore", 
+            "clarify",
+            "fallback",
+            "terminate"
+          ],
+          "description": "Suggested recovery action"
+        },
+        "user_message": {
+          "type": "string",
+          "description": "User-friendly message to display to conversation participants"
+        },
+        "stack_trace": {
+          "type": "string",
+          "description": "Technical stack trace for debugging (not shown to users)"
+        }
+      },
+      "required": ["code", "message", "recoverable"],
+      "additionalProperties": false
+    }
+  ]
+}
