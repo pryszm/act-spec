@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package astra.v1;
+
+import "act.proto";
+import "constraint.proto";
+
+option go_package = "github.com/pryszm/astra-model-go/v1";
+option java_package = "com.pryszm.astra.v1";
+option java_outer_classname = "AskProto";
+option csharp_namespace = "Pryszm.Astra.V1";
+
+// Expected data type of the response
+enum ExpectedType {
+  EXPECTED_TYPE_UNSPECIFIED = 0;
+  EXPECTED_TYPE_STRING = 1;
+  EXPECTED_TYPE_NUMBER = 2;
+  EXPECTED_TYPE_BOOLEAN = 3;
+  EXPECTED_TYPE_OBJECT = 4;
+  EXPECTED_TYPE_ARRAY = 5;
+  EXPECTED_TYPE_DATE = 6;
+  EXPECTED_TYPE_EMAIL = 7;
+  EXPECTED_TYPE_PHONE = 8;
+  EXPECTED_TYPE_ADDRESS = 9;
+}
+
+// Act that requests missing information required to complete a business process
+message Ask {
+  // Base act properties
+  Act act = 1;
+  
+  // Field or information being requested
+  string field = 2;
+  
+  // Question or request presented to obtain the information
+  string prompt = 3;
+  
+  // Validation constraints for the requested information
+  repeated Constraint constraints = 4;
+  
+  // Whether this information is required to proceed
+  bool required = 5; // defaults to true
+  
+  // Expected data type of the response
+  optional ExpectedType expected_type = 6;
+  
+  // Number of times this question has been asked
+  int32 retry_count = 7; // defaults to 0
+  
+  // Maximum number of retry attempts before escalation
+  int32 max_retries = 8; // defaults to 3
+}
