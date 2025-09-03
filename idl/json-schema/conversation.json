@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.astra.dev/v1/conversation.json",
+  "title": "Conversation",
+  "description": "Complete ASTRA conversation container with acts and metadata",
+  "type": "object",
+  "required": ["id", "participants", "acts"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^conv_[a-zA-Z0-9_-]+$",
+      "description": "Unique identifier for this conversation"
+    },
+    "participants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "participant.json"
+      },
+      "description": "List of conversation participants"
+    },
+    "acts": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "ask.json" },
+          { "$ref": "fact.json" },
+          { "$ref": "confirm.json" },
+          { "$ref": "commit.json" },
+          { "$ref": "error.json" }
+        ]
+      },
+      "description": "Ordered sequence of acts in this conversation"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the conversation started"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the conversation ended"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "paused", "completed", "failed", "cancelled"],
+      "default": "active",
+      "description": "Current status of the conversation"
+    },
+    "channel": {
+      "type": "string",
+      "description": "Primary communication channel for this conversation"
+    },
+    "schema": {
+      "type": "string",
+      "description": "Business schema identifier used for this conversation"
+    },
+    "context": {
+      "type": "object",
+      "description": "Conversation context and session information",
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "description": "Session identifier"
+        },
+        "user_agent": {
+          "type": "string",
+          "description": "User agent or client information"
+        },
+        "ip_address": {
+          "type": "string",
+          "description": "Client IP address"
+        },
+        "referrer": {
+          "type": "string",
+          "description": "How the conversation was initiated"
+        }
+      },
+      "additionalProperties": true
+    },
+    "final_state": {
+      "type": "object",
+      "description": "Final computed state of all entities after processing all acts",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional conversation metadata",
+      "properties": {
+        "total_duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total conversation duration in milliseconds"
+        },
+        "act_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of acts in the conversation"
+        },
+        "error_count": {
+          "type":
