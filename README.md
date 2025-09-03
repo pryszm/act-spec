@@ -1,68 +1,159 @@
-# Act Specification
+# ASTRA — Act State Representation Architecture
 
-An open standard for representing conversational state as structured, auditable sequences of actions.
+Canonical types for Acts, Entities, Facts, Confirms, Commits, Errors with constraints, typing & extensibility.
 
-## What is an Act?
+## What is ASTRA?
 
-Acts are atomic conversational events that capture the semantic meaning of business conversations. Instead of storing conversations as unstructured text, acts represent the implicit state changes that occur when people communicate.
+ASTRA provides shared structure so different conversational runtimes and applications can interoperate. It defines the canonical data model for representing conversational state as typed, auditable sequences of actions.
 
-### Four Act Types
+## Core Types
 
-**`Ask`** - Request missing information
-```json
-{
-  "type": "ask",
-  "field": "delivery_address", 
-  "prompt": "What's your delivery address?"
+**`Act`** - Base type for all conversational actions
+```typescript
+interface Act {
+  id: string;
+  timestamp: ISO8601;
+  speaker: ParticipantId;
+  type: "ask" | "fact" | "confirm" | "commit" | "error";
 }
 ```
 
-**`State`** - Declare facts or information
-```json
-{
-  "type": "state",
-  "entity": "order",
-  "field": "items",
-  "value": [{"type": "pizza", "size": "large"}]
+**`Ask`** - Request missing information
+```typescript
+interface Ask extends Act {
+  type: "ask";
+  field: string;
+  prompt: string;
+  constraints?: Constraint[];
+}
+```
+
+**`Fact`** - Declare state information
+```typescript
+interface Fact extends Act {
+  type: "fact";
+  entity: EntityId;
+  field: string;
+  value: any;
+  confidence?: number;
 }
 ```
 
 **`Confirm`** - Verify understanding before commitment
-```json
-{
-  "type": "confirm",
-  "entity": "order",
-  "summary": "Two large pizzas for delivery to 123 Main St"
+```typescript
+interface Confirm extends Act {
+  type: "confirm";
+  entity: EntityId;
+  summary: string;
+  awaiting?: boolean;
+  confirmed?: boolean;
 }
 ```
 
 **`Commit`** - Execute business processes
-```json
-{
-  "type": "commit",
-  "entity": "order",
-  "action": "create",
-  "transaction_id": "ord_1234567890"
+```typescript
+interface Commit extends Act {
+  type: "commit";
+  entity: EntityId;
+  action: "create" | "update" | "delete" | "execute";
+  system?: string;
+  transaction_id?: string;
 }
 ```
 
-## Repository Contents
+**`Error`** - Handle failures and exceptions
+```typescript
+interface Error extends Act {
+  type: "error";
+  code: string;
+  message: string;
+  recoverable: boolean;
+}
+```
 
-- **`/spec`** - Technical specification documents
-- **`/schema`** - JSON Schema for validation  
-- **`/examples`** - Reference implementations and sample conversations
-- **`/tools`** - Validation and development utilities
+## Repository Structure
+
+```
+astra/
+├── idl/                    # Interface Definition Languages
+│   ├── json-schema/        # JSON Schema definitions
+│   ├── protobuf/          # Protocol Buffer schemas  
+│   └── avro/              # Apache Avro schemas
+├── model/                 # Language implementations
+│   ├── typescript/        # astra-model-ts package
+│   ├── python/           # astra-model-py package
+│   └── go/               # astra-model-go package
+├── docs/                 # Architecture documentation
+├── examples/             # Reference implementations
+├── tools/                # Validation and migration tools
+└── compatibility/        # Version compatibility matrix
+```
+
+## Success Criteria
+
+- **Schema-first evolution** - Forward/backward compatible versioning
+- **Extensible type system** - Custom Acts & entity kinds
+- **Static validation** - Compile-time type safety
+- **Runtime guards** - Runtime validation and constraints
 
 ## Quick Start
 
-1. Read the [full specification](./spec/act-spec.md)
-2. Validate acts using the [JSON Schema](./schema/act.json)
-3. See [examples](./examples/) for common conversation patterns
-4. Use [validation tools](./tools/) to test your implementations
-
-## Validation
-
+### Install Model Library
 ```bash
-npm install -g @pryszm/act-validator
-act-validate my-conversation.json
+npm install @astra/model-ts
+pip install astra-model-py
+go get github.com/pryszm/astra-model-go
 ```
+
+### Validate Acts
+```typescript
+import { validateAct, Ask } from '@astra/model-ts';
+
+const ask: Ask = {
+  id: 'act_001',
+  timestamp: '2025-01-15T14:30:00Z',
+  speaker: 'agent_123',
+  type: 'ask',
+  field: 'delivery_address',
+  prompt: 'What is your delivery address?'
+};
+
+const result = validateAct(ask); // ✅ Valid
+```
+
+### Extend Types
+```typescript
+interface CustomEntityAct extends Act {
+  type: 'custom_entity';
+  entity_type: 'my_business_object';
+  custom_field: string;
+}
+
+// Register custom type
+registerActType('custom_entity', CustomEntityActSchema);
+```
+
+## Deliverables
+
+- **`astra/idl/`** - Multi-format schemas (JSON Schema, Protobuf, Avro)
+- **`astra-model` libraries** - TypeScript, Python implementations with validators & builders  
+- **Compatibility matrix** - Version compatibility and migration playbook
+- **Migration tools** - Automated schema evolution utilities
+
+## Schema Evolution
+
+ASTRA supports forward and backward compatible evolution:
+
+```yaml
+# v1.0 -> v1.1 (backward compatible)
+- Add optional fields
+- Extend enums  
+- Add new act types
+
+# v1.x -> v2.0 (breaking changes)  
+- Remove required fields
+- Change field types
+- Remove act types
+```
+
+See [compatibility matrix](./compatibility/matrix.md) for detailed evolution rules.
