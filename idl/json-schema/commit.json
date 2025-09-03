@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.astra.dev/v1/commit.json",
+  "title": "Commit",
+  "description": "Act that executes business processes and triggers system integrations",
+  "allOf": [
+    {
+      "$ref": "act.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "commit"
+        },
+        "entity": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Entity identifier as string"
+            },
+            {
+              "$ref": "entity.json",
+              "description": "Structured entity reference"
+            }
+          ],
+          "description": "Business entity being committed to external systems"
+        },
+        "action": {
+          "type": "string",
+          "enum": ["create", "update", "delete", "execute", "cancel", "pause", "resume"],
+          "description": "Action being performed in the target system"
+        },
+        "system": {
+          "type": "string",
+          "description": "Target system identifier (CRM, order_management, etc.)"
+        },
+        "transaction_id": {
+          "type": "string",
+          "description": "External system transaction or record identifier"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "in_progress", "success", "failed", "retrying", "cancelled"],
+          "default": "pending",
+          "description": "Status of the commit operation"
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code from the target system"
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable error message"
+            },
+            "details": {
+              "type": "object",
+              "description": "Additional error context"
+            },
+            "recoverable": {
+              "type": "boolean",
+              "description": "Whether the error can be recovered from"
+            }
+          },
+          "required": ["code", "message"],
+          "description": "Error information if commit failed"
+        },
+        "retry_count": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Number of retry attempts made"
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 3,
+          "description": "Maximum number of retry attempts"
+        },
+        "idempotency_key": {
+          "type": "string",
+          "description": "Key to ensure idempotent operations"
+        },
+        "rollback_info": {
+          "type": "object",
+          "description": "Information needed to rollback this commit if necessary"
+        }
+      },
+      "required": ["entity", "action"],
+      "additionalProperties": false
+    }
+  ]
+}
