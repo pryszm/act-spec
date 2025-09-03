@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package astra.v1;
+
+import "act.proto";
+import "entity.proto";
+
+option go_package = "github.com/pryszm/astra-model-go/v1";
+option java_package = "com.pryszm.astra.v1";
+option java_outer_classname = "ConfirmProto";
+option csharp_namespace = "Pryszm.Astra.V1";
+
+// How the confirmation was obtained
+enum ConfirmationMethod {
+  CONFIRMATION_METHOD_UNSPECIFIED = 0;
+  CONFIRMATION_METHOD_VERBAL = 1;
+  CONFIRMATION_METHOD_EXPLICIT = 2;
+  CONFIRMATION_METHOD_IMPLICIT = 3;
+  CONFIRMATION_METHOD_TIMEOUT = 4;
+  CONFIRMATION_METHOD_SYSTEM = 5;
+}
+
+// Act that verifies understanding of information before commitment
+message Confirm {
+  // Base act properties
+  Act act = 1;
+  
+  // Business entity being confirmed
+  EntityRef entity = 2;
+  
+  // Human-readable summary of what is being confirmed
+  string summary = 3;
+  
+  // Whether confirmation is still pending
+  bool awaiting = 4; // defaults to true
+  
+  // Whether the confirmation was accepted (true) or rejected (false)
+  optional bool confirmed = 5;
+  
+  // How the confirmation was obtained
+  optional ConfirmationMethod confirmation_method = 6;
+  
+  // Specific fields or aspects being confirmed
+  repeated string fields_confirmed = 7;
+  
+  // Reason provided if confirmation was rejected
+  optional string rejection_reason = 8;
+  
+  // Timeout for awaiting confirmation in milliseconds
+  optional int64 timeout_ms = 9;
+}
