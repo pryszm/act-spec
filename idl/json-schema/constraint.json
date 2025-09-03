@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.astra.dev/v1/constraint.json",
+  "title": "Constraint",
+  "description": "Validation constraint for ASTRA fields and values",
+  "type": "object",
+  "required": ["type"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "required",
+        "optional",
+        "min_length",
+        "max_length",
+        "pattern",
+        "format",
+        "range",
+        "enum",
+        "custom"
+      ],
+      "description": "Type of constraint being applied"
+    },
+    "value": {
+      "description": "Constraint value (varies by constraint type)"
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable error message when constraint is violated"
+    },
+    "code": {
+      "type": "string",
+      "description": "Machine-readable error code for constraint violations"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "type": { "const": "min_length" } }
+      },
+      "then": {
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": ["value"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "max_length" } }
+      },
+      "then": {
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": ["value"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "pattern" } }
+      },
+      "then": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "regex"
+          }
+        },
+        "required": ["value"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "format" } }
+      },
+      "then": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "enum": ["email", "phone", "url", "date", "time", "datetime", "uuid", "ipv4", "ipv6"]
+          }
+        },
+        "required": ["value"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "range" } }
+      },
+      "then": {
+        "properties": {
+          "value": {
+            "type": "object",
+            "properties": {
+              "min": { "type": "number" },
+              "max": { "type": "number" },
+              "inclusive": { "type": "boolean", "default": true }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": ["value"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "enum" } }
+      },
+      "then": {
+        "properties": {
+          "value": {
+            "type": "array",
+            "minItems": 1,
+            "items": {}
+          }
+        },
+        "required": ["value"]
+      }
+    }
+  ],
+  "additionalProperties": false
+}
