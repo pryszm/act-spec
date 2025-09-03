@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package astra.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/pryszm/astra-model-go/v1";
+option java_package = "com.pryszm.astra.v1";
+option java_outer_classname = "ActProto";
+option csharp_namespace = "Pryszm.Astra.V1";
+
+// Source that generated this act
+enum Source {
+  SOURCE_UNSPECIFIED = 0;
+  SOURCE_HUMAN = 1;
+  SOURCE_SPEECH_RECOGNITION = 2;
+  SOURCE_TEXT_ANALYSIS = 3;
+  SOURCE_SYSTEM = 4;
+  SOURCE_AI = 5;
+}
+
+// Type of conversational act
+enum ActType {
+  ACT_TYPE_UNSPECIFIED = 0;
+  ACT_TYPE_ASK = 1;
+  ACT_TYPE_FACT = 2;
+  ACT_TYPE_CONFIRM = 3;
+  ACT_TYPE_COMMIT = 4;
+  ACT_TYPE_ERROR = 5;
+}
+
+// Additional metadata for acts
+message ActMetadata {
+  // Communication channel (voice, text, email, etc.)
+  string channel = 1;
+  
+  // Language code (ISO 639-1, optional region)
+  string language = 2;
+  
+  // Original utterance that generated this act
+  string original_text = 3;
+  
+  // Time taken to process this act in milliseconds
+  double processing_time_ms = 4;
+  
+  // Additional context-specific metadata
+  google.protobuf.Struct additional_properties = 5;
+}
+
+// Base type for all conversational actions in ASTRA
+message Act {
+  // Unique identifier for this act within the conversation
+  string id = 1;
+  
+  // Timestamp when the act occurred
+  google.protobuf.Timestamp timestamp = 2;
+  
+  // Identifier of the conversation participant who performed this act
+  string speaker = 3;
+  
+  // Type of conversational act being performed
+  ActType type = 4;
+  
+  // Confidence score for automated act extraction (0.0 to 1.0)
+  optional double confidence = 5;
+  
+  // Source that generated this act
+  optional Source source = 6;
+  
+  // Additional context-specific metadata
+  optional ActMetadata metadata = 7;
+}
