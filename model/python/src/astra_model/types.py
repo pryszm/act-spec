@@ -1,536 +1,430 @@
 """
-Tests for ASTRA Python types and utilities
+ASTRA (Act State Representation Architecture) Python Types
+
+Core types for representing conversational state as typed, auditable sequences of actions.
 """
 
-import json
-import pytest
+import uuid
 from datetime import datetime
-from pydantic import ValidationError
+from typing import Any, Dict, List, Literal, Optional, Union
+from pydantic import BaseModel, Field, ConfigDict, model_validator
+from enum import Enum
 
-from astra_model import (
-    # Types
-    Act,
-    Ask,
-    Fact,
-    Confirm,
-    Commit,
-    Error,
-    Participant,
-    Entity,
-    Conversation,
-    Constraint,
-    
-    # Enums
-    ActType,
-    Source,
-    ParticipantType,
-    FieldOperation,
-    ValidationStatus,
-    ConfirmationMethod,
-    CommitAction,
-    CommitStatus,
-    ErrorSeverity,
-    ErrorCategory,
-    SuggestedAction,
-    ConversationStatus,
-    
-    # Utilities
-    generate_act_id,
-    generate_conversation_id,
-    create_base_act,
-    
-    # Constants
-    __version__,
-    __schema_version__,
-    
-    # Schemas
-    SCHEMAS
-)
+# ============================================================================
+# Base Types
+# ============================================================================
+
+class Source(str, Enum):
+    """Source that generated this act"""
+    HUMAN = "human"
+    SPEECH_RECOGNITION = "speech_recognition"
+    TEXT_ANALYSIS = "text_analysis"
+    SYSTEM = "system"
+    AI = "ai"
 
 
-class TestActTypes:
-    """Tests for core Act types"""
-    
-    def test_ask_creation(self):
-        """Test creating Ask acts"""
-        ask = Ask(
-            id="act_001",
-            timestamp="2025-01-15T14:30:00Z",
-            speaker="agent_123",
-            type=ActType.ASK,
-            field="email",
-            prompt="What is your email address?"
-        )
-        
-        assert ask.id == "act_001"
-        assert ask.type == ActType.ASK
-        assert ask.field == "email"
-        assert ask.prompt == "What is your email address?"
-        assert ask.required is True  # default value
-        
-    def test_ask_validation(self):
-        """Test Ask validation"""
-        # Missing required field
-        with pytest.raises(ValidationError):
-            Ask(
-                id="act_001",
-                timestamp="2025-01-15T14:30:00Z",
-                speaker="agent_123",
-                type=ActType.ASK,
-                # missing field
-                prompt="What is your email?"
-            )
-            
-        # Invalid act ID pattern
-        with pytest.raises(ValidationError):
-            Ask(
-                id="invalid_id",  # doesn't match pattern
-                timestamp="2025-01-15T14:30:00Z",
-                speaker="agent_123",
-                type=ActType.ASK,
-                field="email",
-                prompt="What is your email?"
-            )
-    
-    def test_fact_creation(self):
-        """Test creating Fact acts"""
-        # With string entity
-        fact1 = Fact(
-            id="act_002",
-            timestamp="2025-01-15T14:30:00Z",
-            speaker="customer_456",
-            type=ActType.FACT,
-            entity="customer_456",
-            field="email",
-            value="user@example.com"
-        )
-        
-        assert fact1.entity == "customer_456"
-        assert fact1.value == "user@example.com"
-        assert fact1.operation == FieldOperation.SET  # default
-        
-        # With Entity object
-        entity = Entity(id="customer_456", type="customer")
-        fact2 = Fact(
-            id="act_003",
-            timestamp="2025-01-15T14:30:00Z",
-            speaker="customer_456",
-            type=ActType.FACT,
-            entity=entity,
-            field="name",
-            value="John Doe",
-            operation=FieldOperation.APPEND
-        )
-        
-        assert isinstance(fact2.entity, Entity)
-        assert fact2.entity.id == "customer_456"
-        assert fact2.operation == FieldOperation.APPEND
-    
-    def test_confirm_creation(self):
-        """Test creating Confirm acts"""
-        confirm = Confirm(
-            id="act_004",
-            timestamp="2025-01-15T14:30:00Z",
-            speaker="agent_123",
-            type=ActType.CONFIRM,
-            entity="order_789",
-            summary="Order for 2 pizzas to be delivered at 6 PM"
-        )
-        
-        assert confirm.entity == "order_789"
-        assert confirm.summary == "Order for 2 pizzas to be delivered at 6 PM"
-        assert confirm.awaiting is True  # default
-        assert confirm.confirmed is None  # not yet confirmed
-    
-    def test_commit_creation(self):
-        """Test creating Commit acts"""
-        commit = Commit(
-            id="act_005",
-            timestamp="2025-01-15T14:30:00Z",
-            speaker="system_001",
-            type=ActType.COMMIT,
-            entity="order_789",
-            action=CommitAction.CREATE,
-            system="order_management"
-        )
-        
-        assert commit.action == CommitAction.CREATE
-        assert commit.system == "order_management"
-        assert commit.status == CommitStatus.PENDING  # default
-        assert commit.retry_count == 0  # default
-    
-    def test_error_creation(self):
-        """Test creating Error acts"""
-        error = Error(
-            id="act_006",
-            timestamp="2025-01-15T14:30:00Z",
-            speaker="system_001",
-            type=ActType.ERROR,
-            code="VALIDATION_ERROR",
-            message="Invalid email format",
-            recoverable=True
-        )
-        
-        assert error.code == "VALIDATION_ERROR"
-        assert error.message == "Invalid email format"
-        assert error.recoverable is True
-        assert error.severity == ErrorSeverity.ERROR  # default
+class ActType(str, Enum):
+    """Type of conversational act being performed"""
+    ASK = "ask"
+    FACT = "fact"
+    CONFIRM = "confirm"
+    COMMIT = "commit"
+    ERROR = "error"
 
 
-class TestEntityTypes:
-    """Tests for Entity types"""
+class ActMetadata(BaseModel):
+    """Additional metadata for acts"""
+    model_config = ConfigDict(extra="allow")
     
-    def test_entity_creation(self):
-        """Test creating Entity objects"""
-        entity = Entity(
-            id="customer_123",
-            type="customer",
-            external_id="cust_ext_456",
-            system="crm",
-            metadata={"priority": "high"}
-        )
-        
-        assert entity.id == "customer_123"
-        assert entity.type == "customer"
-        assert entity.external_id == "cust_ext_456"
-        assert entity.system == "crm"
-        assert entity.metadata == {"priority": "high"}
-    
-    def test_entity_validation(self):
-        """Test Entity validation"""
-        # Missing required fields
-        with pytest.raises(ValidationError):
-            Entity(id="test")  # missing type
-            
-        with pytest.raises(ValidationError):
-            Entity(type="customer")  # missing id
+    channel: Optional[str] = Field(None, description="Communication channel (voice, text, email, etc.)")
+    language: Optional[str] = Field(None, pattern=r"^[a-z]{2}(-[A-Z]{2})?$", description="Language code (ISO 639-1, optional region)")
+    original_text: Optional[str] = Field(None, description="Original utterance that generated this act")
+    processing_time_ms: Optional[float] = Field(None, ge=0, description="Time taken to process this act in milliseconds")
 
 
-class TestParticipantTypes:
-    """Tests for Participant types"""
+class Act(BaseModel):
+    """Base type for all conversational actions in ASTRA"""
+    model_config = ConfigDict(extra="forbid")
     
-    def test_participant_creation(self):
-        """Test creating Participant objects"""
-        participant = Participant(
-            id="agent_001",
-            type=ParticipantType.AI,
-            role="customer_service",
-            name="Support Agent",
-            capabilities=["text", "voice"],
-            preferences={
-                "language": "en-US",
-                "timezone": "America/New_York"
-            }
-        )
-        
-        assert participant.id == "agent_001"
-        assert participant.type == ParticipantType.AI
-        assert participant.role == "customer_service"
-        assert "text" in participant.capabilities
-        assert participant.preferences.language == "en-US"
+    id: str = Field(..., pattern=r"^act_[a-zA-Z0-9_-]+$", description="Unique identifier for this act within the conversation")
+    timestamp: str = Field(..., description="ISO 8601 timestamp when the act occurred")
+    speaker: str = Field(..., description="Identifier of the conversation participant who performed this act")
+    type: ActType = Field(..., description="Type of conversational act being performed")
+    confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Confidence score for automated act extraction (0.0 to 1.0)")
+    source: Optional[Source] = Field(None, description="Source that generated this act")
+    metadata: Optional[ActMetadata] = Field(None, description="Additional context-specific metadata")
 
 
-class TestConversationTypes:
-    """Tests for Conversation types"""
+# ============================================================================
+# Entity Types
+# ============================================================================
+
+class Entity(BaseModel):
+    """Reference to a business entity in ASTRA conversations"""
+    model_config = ConfigDict(extra="forbid")
     
-    def test_conversation_creation(self):
-        """Test creating Conversation objects"""
-        agent = Participant(id="agent_001", type=ParticipantType.AI)
-        customer = Participant(id="customer_123", type=ParticipantType.HUMAN)
-        
-        ask = Ask(
-            id="act_001",
-            timestamp="2025-01-15T14:30:00Z",
-            speaker="agent_001",
-            type=ActType.ASK,
-            field="email",
-            prompt="What is your email?"
-        )
-        
-        conversation = Conversation(
-            id="conv_001",
-            participants=[agent, customer],
-            acts=[ask],
-            status=ConversationStatus.ACTIVE
-        )
-        
-        assert conversation.id == "conv_001"
-        assert len(conversation.participants) == 2
-        assert len(conversation.acts) == 1
-        assert conversation.status == ConversationStatus.ACTIVE
-    
-    def test_conversation_validation(self):
-        """Test Conversation validation"""
-        # Missing participants
-        with pytest.raises(ValidationError):
-            Conversation(
-                id="conv_001",
-                participants=[],  # must have at least one
-                acts=[]
-            )
-            
-        # Invalid conversation ID pattern
-        with pytest.raises(ValidationError):
-            Conversation(
-                id="invalid_id",  # doesn't match pattern
-                participants=[Participant(id="p1", type=ParticipantType.HUMAN)],
-                acts=[]
-            )
+    id: str = Field(..., description="Unique identifier for this entity within the conversation scope")
+    type: str = Field(..., description="Type of business entity (order, customer, appointment, ticket, etc.)")
+    external_id: Optional[str] = Field(None, description="External system identifier for this entity")
+    system: Optional[str] = Field(None, description="External system that owns this entity")
+    version: Optional[str] = Field(None, description="Version or revision of this entity")
+    schema_url: Optional[str] = Field(None, description="URL to the schema definition for this entity type")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional entity-specific metadata")
 
 
-class TestUtilityFunctions:
-    """Tests for utility functions"""
-    
-    def test_generate_act_id(self):
-        """Test act ID generation"""
-        id1 = generate_act_id()
-        id2 = generate_act_id()
-        
-        # Check format
-        assert id1.startswith("act_")
-        assert id2.startswith("act_")
-        
-        # Should be unique
-        assert id1 != id2
-        
-        # Should match pattern
-        import re
-        pattern = r"^act_[a-zA-Z0-9_-]+$"
-        assert re.match(pattern, id1)
-        assert re.match(pattern, id2)
-    
-    def test_generate_conversation_id(self):
-        """Test conversation ID generation"""
-        id1 = generate_conversation_id()
-        id2 = generate_conversation_id()
-        
-        # Check format
-        assert id1.startswith("conv_")
-        assert id2.startswith("conv_")
-        
-        # Should be unique
-        assert id1 != id2
-        
-        # Should match pattern
-        import re
-        pattern = r"^conv_[a-zA-Z0-9_-]+$"
-        assert re.match(pattern, id1)
-        assert re.match(pattern, id2)
-    
-    def test_create_base_act(self):
-        """Test base act creation"""
-        base_act = create_base_act(
-            speaker="test_speaker",
-            act_type=ActType.ASK,
-            confidence=0.9,
-            source=Source.SYSTEM
-        )
-        
-        assert base_act["speaker"] == "test_speaker"
-        assert base_act["type"] == "ask"
-        assert base_act["confidence"] == 0.9
-        assert base_act["source"] == "system"
-        assert "id" in base_act
-        assert "timestamp" in base_act
+# Entity reference that can be either a string ID or structured Entity
+EntityRef = Union[str, Entity]
 
 
-class TestSerialization:
-    """Tests for JSON serialization/deserialization"""
-    
-    def test_act_serialization(self):
-        """Test Act serialization to/from JSON"""
-        ask = Ask(
-            id="act_001",
-            timestamp="2025-01-15T14:30:00Z",
-            speaker="agent_123",
-            type=ActType.ASK,
-            field="email",
-            prompt="What is your email address?",
-            confidence=0.95
-        )
-        
-        # Serialize to JSON
-        json_str = ask.model_dump_json()
-        data = json.loads(json_str)
-        
-        assert data["id"] == "act_001"
-        assert data["type"] == "ask"
-        assert data["confidence"] == 0.95
-        
-        # Deserialize from JSON
-        ask_loaded = Ask.model_validate_json(json_str)
-        assert ask_loaded.id == ask.id
-        assert ask_loaded.type == ask.type
-        assert ask_loaded.confidence == ask.confidence
-    
-    def test_conversation_serialization(self):
-        """Test complete Conversation serialization"""
-        agent = Participant(id="agent_001", type=ParticipantType.AI)
-        customer = Participant(id="customer_123", type=ParticipantType.HUMAN)
-        
-        ask = Ask(
-            id="act_001",
-            timestamp="2025-01-15T14:30:00Z",
-            speaker="agent_001",
-            type=ActType.ASK,
-            field="email",
-            prompt="What is your email?"
-        )
-        
-        fact = Fact(
-            id="act_002",
-            timestamp="2025-01-15T14:31:00Z",
-            speaker="customer_123",
-            type=ActType.FACT,
-            entity="customer_123",
-            field="email",
-            value="user@example.com"
-        )
-        
-        conversation = Conversation(
-            id="conv_001",
-            participants=[agent, customer],
-            acts=[ask, fact],
-            status=ConversationStatus.ACTIVE
-        )
-        
-        # Serialize
-        json_str = conversation.model_dump_json()
-        
-        # Deserialize
-        conversation_loaded = Conversation.model_validate_json(json_str)
-        
-        assert conversation_loaded.id == conversation.id
-        assert len(conversation_loaded.participants) == 2
-        assert len(conversation_loaded.acts) == 2
-        assert isinstance(conversation_loaded.acts[0], Ask)
-        assert isinstance(conversation_loaded.acts[1], Fact)
+# ============================================================================
+# Constraint Types
+# ============================================================================
+
+class ConstraintType(str, Enum):
+    """Type of constraint being applied"""
+    REQUIRED = "required"
+    OPTIONAL = "optional"
+    MIN_LENGTH = "min_length"
+    MAX_LENGTH = "max_length"
+    PATTERN = "pattern"
+    FORMAT = "format"
+    RANGE = "range"
+    ENUM = "enum"
+    CUSTOM = "custom"
 
 
-class TestSchemas:
-    """Tests for JSON schemas"""
-    
-    def test_schemas_available(self):
-        """Test that all schemas are available"""
-        expected_schemas = [
-            "act", "ask", "fact", "confirm", "commit", "error",
-            "entity", "participant", "constraint", "conversation"
-        ]
-        
-        for schema_name in expected_schemas:
-            assert schema_name in SCHEMAS
-            schema = SCHEMAS[schema_name]
-            assert "$schema" in schema
-            assert "$id" in schema
-            assert "title" in schema
-            assert "description" in schema
-    
-    def test_schema_structure(self):
-        """Test schema structure"""
-        act_schema = SCHEMAS["act"]
-        
-        assert act_schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
-        assert act_schema["$id"] == "https://schemas.astra.dev/v1/act.json"
-        assert act_schema["title"] == "Act"
-        assert act_schema["type"] == "object"
-        assert "id" in act_schema["required"]
-        assert "timestamp" in act_schema["required"]
-        assert "speaker" in act_schema["required"]
-        assert "type" in act_schema["required"]
+class FormatType(str, Enum):
+    """Format validation types"""
+    EMAIL = "email"
+    PHONE = "phone"
+    URL = "url"
+    DATE = "date"
+    TIME = "time"
+    DATETIME = "datetime"
+    UUID = "uuid"
+    IPV4 = "ipv4"
+    IPV6 = "ipv6"
 
 
-class TestConstants:
-    """Tests for package constants"""
+class RangeConstraint(BaseModel):
+    """Range constraint value"""
+    model_config = ConfigDict(extra="forbid")
     
-    def test_version_constants(self):
-        """Test version information"""
-        assert __version__ == "1.0.0"
-        assert __schema_version__ == "v1"
+    min: Optional[float] = Field(None, description="Minimum value")
+    max: Optional[float] = Field(None, description="Maximum value")
+    inclusive: bool = Field(True, description="Whether the range is inclusive")
 
 
-class TestPydanticFeatures:
-    """Tests for Pydantic-specific features"""
+class Constraint(BaseModel):
+    """Validation constraint for ASTRA fields and values"""
+    model_config = ConfigDict(extra="forbid")
     
-    def test_model_validation(self):
-        """Test Pydantic model validation"""
-        # Valid data
-        data = {
-            "id": "act_001",
-            "timestamp": "2025-01-15T14:30:00Z",
-            "speaker": "agent_123",
-            "type": "ask",
-            "field": "email",
-            "prompt": "What is your email?"
-        }
-        
-        ask = Ask.model_validate(data)
-        assert ask.id == "act_001"
-        assert ask.type == ActType.ASK
-        
-        # Invalid data - should raise ValidationError
-        invalid_data = {
-            "id": "act_001",
-            "timestamp": "2025-01-15T14:30:00Z",
-            "speaker": "agent_123",
-            "type": "invalid_type",  # invalid enum value
-            "field": "email",
-            "prompt": "What is your email?"
-        }
-        
-        with pytest.raises(ValidationError) as exc_info:
-            Ask.model_validate(invalid_data)
-        
-        # Should mention the invalid enum value
-        assert "invalid_type" in str(exc_info.value)
-    
-    def test_model_dump(self):
-        """Test model dumping to dict/JSON"""
-        ask = Ask(
-            id="act_001",
-            timestamp="2025-01-15T14:30:00Z",
-            speaker="agent_123",
-            type=ActType.ASK,
-            field="email",
-            prompt="What is your email?"
-        )
-        
-        # Dump to dict
-        data = ask.model_dump()
-        assert isinstance(data, dict)
-        assert data["type"] == "ask"
-        
-        # Dump to JSON
-        json_str = ask.model_dump_json()
-        assert isinstance(json_str, str)
-        
-        # Should be valid JSON
-        parsed = json.loads(json_str)
-        assert parsed["id"] == "act_001"
-    
-    def test_model_copy(self):
-        """Test model copying with updates"""
-        ask = Ask(
-            id="act_001",
-            timestamp="2025-01-15T14:30:00Z",
-            speaker="agent_123",
-            type=ActType.ASK,
-            field="email",
-            prompt="What is your email?"
-        )
-        
-        # Copy with updates
-        ask_copy = ask.model_copy(update={"prompt": "Please provide your email address"})
-        
-        # Original unchanged
-        assert ask.prompt == "What is your email?"
-        
-        # Copy has updated value
-        assert ask_copy.prompt == "Please provide your email address"
-        
-        # Other fields same
-        assert ask_copy.id == ask.id
-        assert ask_copy.speaker == ask.speaker
+    type: ConstraintType = Field(..., description="Type of constraint being applied")
+    value: Optional[Union[int, str, FormatType, RangeConstraint, List[str]]] = Field(None, description="Constraint value (varies by constraint type)")
+    message: Optional[str] = Field(None, description="Human-readable error message when constraint is violated")
+    code: Optional[str] = Field(None, description="Machine-readable error code for constraint violations")
 
 
-if __name__ == "__main__":
-    pytest.main([__file__])
+# ============================================================================
+# Participant Types
+# ============================================================================
+
+class ParticipantType(str, Enum):
+    """Type of participant"""
+    HUMAN = "human"
+    AI = "ai"
+    SYSTEM = "system"
+    BOT = "bot"
+
+
+class ParticipantPreferences(BaseModel):
+    """Participant preferences"""
+    model_config = ConfigDict(extra="allow")
+    
+    language: Optional[str] = Field(None, pattern=r"^[a-z]{2}(-[A-Z]{2})?$", description="Preferred language code (ISO 639-1 with optional region)")
+    timezone: Optional[str] = Field(None, description="Preferred timezone (IANA timezone identifier)")
+    communication_channels: Optional[List[str]] = Field(None, description="Preferred communication channels in order of preference")
+
+
+class Participant(BaseModel):
+    """Conversation participant in ASTRA conversations"""
+    model_config = ConfigDict(extra="forbid")
+    
+    id: str = Field(..., description="Unique identifier for this participant")
+    type: ParticipantType = Field(..., description="Type of participant")
+    role: Optional[str] = Field(None, description="Business role of the participant (customer, agent, manager, etc.)")
+    name: Optional[str] = Field(None, description="Display name of the participant")
+    email: Optional[str] = Field(None, description="Email address of the participant")
+    phone: Optional[str] = Field(None, description="Phone number of the participant")
+    external_id: Optional[str] = Field(None, description="External system identifier for this participant")
+    system: Optional[str] = Field(None, description="External system that manages this participant")
+    capabilities: Optional[List[str]] = Field(None, description="List of capabilities this participant has")
+    permissions: Optional[List[str]] = Field(None, description="List of permissions granted to this participant")
+    preferences: Optional[ParticipantPreferences] = Field(None, description="Participant preferences")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional participant metadata")
+
+
+# ============================================================================
+# Act Types
+# ============================================================================
+
+class ExpectedType(str, Enum):
+    """Expected data type of the response"""
+    STRING = "string"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    OBJECT = "object"
+    ARRAY = "array"
+    DATE = "date"
+    EMAIL = "email"
+    PHONE = "phone"
+    ADDRESS = "address"
+
+
+class Ask(Act):
+    """Act that requests missing information required to complete a business process"""
+    
+    type: Literal[ActType.ASK] = Field(ActType.ASK, description="Type of conversational act being performed")
+    field: str = Field(..., description="Field or information being requested")
+    prompt: str = Field(..., description="Question or request presented to obtain the information")
+    constraints: Optional[List[Constraint]] = Field(None, description="Validation constraints for the requested information")
+    required: bool = Field(True, description="Whether this information is required to proceed")
+    expected_type: Optional[ExpectedType] = Field(None, description="Expected data type of the response")
+    retry_count: int = Field(0, ge=0, description="Number of times this question has been asked")
+    max_retries: int = Field(3, ge=0, description="Maximum number of retry attempts before escalation")
+
+
+class FieldOperation(str, Enum):
+    """Operation being performed on the field"""
+    SET = "set"
+    APPEND = "append"
+    INCREMENT = "increment"
+    DECREMENT = "decrement"
+    DELETE = "delete"
+    MERGE = "merge"
+
+
+class ValidationStatus(str, Enum):
+    """Validation status of this fact"""
+    PENDING = "pending"
+    VALID = "valid"
+    INVALID = "invalid"
+    PARTIAL = "partial"
+
+
+class Fact(Act):
+    """Act that declares facts or information provided during conversation"""
+    
+    type: Literal[ActType.FACT] = Field(ActType.FACT, description="Type of conversational act being performed")
+    entity: EntityRef = Field(..., description="Business entity being modified (order, customer, appointment, etc.)")
+    field: str = Field(..., description="Specific field or property being set")
+    value: Any = Field(..., description="Value being assigned to the field")
+    operation: FieldOperation = Field(FieldOperation.SET, description="Operation being performed on the field")
+    previous_value: Optional[Any] = Field(None, description="Previous value of the field (for audit trail)")
+    validation_status: ValidationStatus = Field(ValidationStatus.PENDING, description="Validation status of this fact")
+    validation_errors: Optional[List[str]] = Field(None, description="List of validation errors if validation_status is invalid")
+
+
+class ConfirmationMethod(str, Enum):
+    """How the confirmation was obtained"""
+    VERBAL = "verbal"
+    EXPLICIT = "explicit"
+    IMPLICIT = "implicit"
+    TIMEOUT = "timeout"
+    SYSTEM = "system"
+
+
+class Confirm(Act):
+    """Act that verifies understanding of information before commitment"""
+    
+    type: Literal[ActType.CONFIRM] = Field(ActType.CONFIRM, description="Type of conversational act being performed")
+    entity: EntityRef = Field(..., description="Business entity being confirmed")
+    summary: str = Field(..., description="Human-readable summary of what is being confirmed")
+    awaiting: bool = Field(True, description="Whether confirmation is still pending")
+    confirmed: Optional[bool] = Field(None, description="Whether the confirmation was accepted (true) or rejected (false)")
+    confirmation_method: Optional[ConfirmationMethod] = Field(None, description="How the confirmation was obtained")
+    fields_confirmed: Optional[List[str]] = Field(None, description="Specific fields or aspects being confirmed")
+    rejection_reason: Optional[str] = Field(None, description="Reason provided if confirmation was rejected")
+    timeout_ms: Optional[int] = Field(None, ge=0, description="Timeout for awaiting confirmation in milliseconds")
+
+
+class CommitAction(str, Enum):
+    """Action being performed in the target system"""
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+    EXECUTE = "execute"
+    CANCEL = "cancel"
+    PAUSE = "pause"
+    RESUME = "resume"
+
+
+class CommitStatus(str, Enum):
+    """Status of the commit operation"""
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    SUCCESS = "success"
+    FAILED = "failed"
+    RETRYING = "retrying"
+    CANCELLED = "cancelled"
+
+
+class CommitError(BaseModel):
+    """Error information for failed commits"""
+    model_config = ConfigDict(extra="forbid")
+    
+    code: str = Field(..., description="Error code from the target system")
+    message: str = Field(..., description="Human-readable error message")
+    details: Optional[Dict[str, Any]] = Field(None, description="Additional error context")
+    recoverable: bool = Field(..., description="Whether the error can be recovered from")
+
+
+class Commit(Act):
+    """Act that executes business processes and triggers system integrations"""
+    
+    type: Literal[ActType.COMMIT] = Field(ActType.COMMIT, description="Type of conversational act being performed")
+    entity: EntityRef = Field(..., description="Business entity being committed to external systems")
+    action: CommitAction = Field(..., description="Action being performed in the target system")
+    system: Optional[str] = Field(None, description="Target system identifier (CRM, order_management, etc.)")
+    transaction_id: Optional[str] = Field(None, description="External system transaction or record identifier")
+    status: CommitStatus = Field(CommitStatus.PENDING, description="Status of the commit operation")
+    error: Optional[CommitError] = Field(None, description="Error information if commit failed")
+    retry_count: int = Field(0, ge=0, description="Number of retry attempts made")
+    max_retries: int = Field(3, ge=0, description="Maximum number of retry attempts")
+    idempotency_key: Optional[str] = Field(None, description="Key to ensure idempotent operations")
+    rollback_info: Optional[Dict[str, Any]] = Field(None, description="Information needed to rollback this commit if necessary")
+
+
+class ErrorSeverity(str, Enum):
+    """Severity level of the error"""
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
+
+
+class ErrorCategory(str, Enum):
+    """Category of error for classification"""
+    VALIDATION = "validation"
+    PROCESSING = "processing"
+    INTEGRATION = "integration"
+    TIMEOUT = "timeout"
+    PERMISSION = "permission"
+    SYSTEM = "system"
+    USER_INPUT = "user_input"
+    BUSINESS_RULE = "business_rule"
+
+
+class SuggestedAction(str, Enum):
+    """Suggested recovery action"""
+    RETRY = "retry"
+    ESCALATE = "escalate"
+    IGNORE = "ignore"
+    CLARIFY = "clarify"
+    FALLBACK = "fallback"
+    TERMINATE = "terminate"
+
+
+class Error(Act):
+    """Act that handles failures and exceptions in conversational processing"""
+    
+    type: Literal[ActType.ERROR] = Field(ActType.ERROR, description="Type of conversational act being performed")
+    code: str = Field(..., description="Machine-readable error code")
+    message: str = Field(..., description="Human-readable error message")
+    recoverable: bool = Field(..., description="Whether the conversation can continue after this error")
+    severity: ErrorSeverity = Field(ErrorSeverity.ERROR, description="Severity level of the error")
+    category: Optional[ErrorCategory] = Field(None, description="Category of error for classification")
+    details: Optional[Dict[str, Any]] = Field(None, description="Additional error context and debugging information")
+    related_act_id: Optional[str] = Field(None, pattern=r"^act_[a-zA-Z0-9_-]+$", description="ID of the act that caused this error")
+    suggested_action: Optional[SuggestedAction] = Field(None, description="Suggested recovery action")
+    user_message: Optional[str] = Field(None, description="User-friendly message to display to conversation participants")
+    stack_trace: Optional[str] = Field(None, description="Technical stack trace for debugging (not shown to users)")
+
+
+# ============================================================================
+# Conversation Types
+# ============================================================================
+
+# Union type for all possible acts
+ConversationAct = Union[Ask, Fact, Confirm, Commit, Error]
+
+
+class ConversationStatus(str, Enum):
+    """Current status of the conversation"""
+    ACTIVE = "active"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class ConversationContext(BaseModel):
+    """Conversation context and session information"""
+    model_config = ConfigDict(extra="allow")
+    
+    session_id: Optional[str] = Field(None, description="Session identifier")
+    user_agent: Optional[str] = Field(None, description="User agent or client information")
+    ip_address: Optional[str] = Field(None, description="Client IP address")
+    referrer: Optional[str] = Field(None, description="How the conversation was initiated")
+
+
+class ConversationMetadata(BaseModel):
+    """Additional conversation metadata"""
+    model_config = ConfigDict(extra="allow")
+    
+    total_duration_ms: Optional[int] = Field(None, ge=0, description="Total conversation duration in milliseconds")
+    act_count: Optional[int] = Field(None, ge=0, description="Total number of acts in the conversation")
+    error_count: Optional[int] = Field(None, ge=0, description="Number of errors that occurred")
+    commit_count: Optional[int] = Field(None, ge=0, description="Number of successful commits")
+    avg_confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Average confidence score across all acts")
+
+
+class Conversation(BaseModel):
+    """Complete ASTRA conversation container with acts and metadata"""
+    model_config = ConfigDict(extra="forbid")
+    
+    id: str = Field(..., pattern=r"^conv_[a-zA-Z0-9_-]+$", description="Unique identifier for this conversation")
+    participants: List[Participant] = Field(..., min_length=1, description="List of conversation participants")
+    acts: List[ConversationAct] = Field(..., description="Ordered sequence of acts in this conversation")
+    started_at: Optional[str] = Field(None, description="When the conversation started")
+    ended_at: Optional[str] = Field(None, description="When the conversation ended")
+    status: ConversationStatus = Field(ConversationStatus.ACTIVE, description="Current status of the conversation")
+    channel: Optional[str] = Field(None, description="Primary communication channel for this conversation")
+    schema: Optional[str] = Field(None, description="Business schema identifier used for this conversation")
+    context: Optional[ConversationContext] = Field(None, description="Conversation context and session information")
+    final_state: Optional[Dict[str, Any]] = Field(None, description="Final computed state of all entities after processing all acts")
+    metadata: Optional[ConversationMetadata] = Field(None, description="Additional conversation metadata")
+
+
+# ============================================================================
+# Utility Functions
+# ============================================================================
+
+def generate_act_id() -> str:
+    """Generate ASTRA-compliant act ID"""
+    timestamp = hex(int(datetime.now().timestamp()))[2:]
+    random_part = str(uuid.uuid4()).replace('-', '')[:6]
+    return f"act_{timestamp}_{random_part}"
+
+
+def generate_conversation_id() -> str:
+    """Generate ASTRA-compliant conversation ID"""
+    timestamp = hex(int(datetime.now().timestamp()))[2:]
+    random_part = str(uuid.uuid4()).replace('-', '')[:6]
+    return f"conv_{timestamp}_{random_part}"
+
+
+def create_base_act(
+    speaker: str,
+    act_type: ActType,
+    **additional_fields: Any
+) -> Dict[str, Any]:
+    """Create a base act structure with required fields"""
+    base_act = {
+        "id": generate_act_id(),
+        "timestamp": datetime.now().isoformat() + "Z",
+        "speaker": speaker,
+        "type": act_type.value,
+        **additional_fields
+    }
+    return base_act
